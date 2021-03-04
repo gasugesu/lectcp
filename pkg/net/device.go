@@ -103,10 +103,12 @@ func (d *Device) Interfaces() []ProtocolInterface {
 
 func (d *Device) Shutdown() {
 	d.LinkDevice.Close()
-	if err := <-d.errors; err != nil {
+	select {
+	case err := <-d.errors:
 		if err != io.EOF {
 			log.Println(err)
 		}
+	default:
 	}
 	devices.Delete(d.LinkDevice)
 }
