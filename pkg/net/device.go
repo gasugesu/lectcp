@@ -25,7 +25,7 @@ type LinkDevice interface {
 
 type Device struct {
 	LinkDevice
-	errors chan error
+	err    chan error
 	ifaces []ProtocolInterface
 	sync.RWMutex
 }
@@ -38,7 +38,7 @@ func RegisterDevice(link LinkDevice) (*Device, error) {
 	}
 	dev := &Device{
 		LinkDevice: link,
-		errors:     make(chan error),
+		err:        make(chan error),
 	}
 	// launch rx loop
 	go func() {
@@ -49,7 +49,7 @@ func RegisterDevice(link LinkDevice) (*Device, error) {
 				dev.RxHandler(buf[:n], rxHandler)
 			}
 			if err != nil {
-				dev.errors <- err
+				dev.err <- err
 				break
 			}
 		}
@@ -103,13 +103,13 @@ func (d *Device) Interfaces() []ProtocolInterface {
 func (d *Device) Shutdown() {
 	d.LinkDevice.Close()
 	select {
-	case err := <-d.errors:
+	case err := <-d.err:
 		if err != io.EOF {
 			log.Println(err)
 		}
 	default:
 	}
-	close(d.errors)
+	close(d.err)
 	devices.Delete(d.LinkDevice)
 }
 
