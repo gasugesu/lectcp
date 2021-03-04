@@ -53,7 +53,6 @@ func RegisterDevice(link LinkDevice) (*Device, error) {
 				break
 			}
 		}
-		close(dev.errors)
 	}()
 	devices.Store(link, dev)
 	return dev, nil
@@ -110,6 +109,7 @@ func (d *Device) Shutdown() {
 		}
 	default:
 	}
+	close(d.errors)
 	devices.Delete(d.LinkDevice)
 }
 
